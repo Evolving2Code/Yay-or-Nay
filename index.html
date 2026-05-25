@@ -16,6 +16,31 @@
             <p class="subtitle">What do you think?</p>
         </header>
 
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-input-group">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Search Instagram or TikTok username..."
+                    >
+                    <button class="search-btn" id="searchBtn">🔍 Search</button>
+                </div>
+                <div class="search-options">
+                    <label class="search-option">
+                        <input type="radio" name="platform" value="instagram" checked>
+                        📷 Instagram
+                    </label>
+                    <label class="search-option">
+                        <input type="radio" name="platform" value="tiktok">
+                        🎵 TikTok
+                    </label>
+                </div>
+            </div>
+        </div>
+
         <!-- Stats Bar -->
         <div class="stats-bar">
             <div class="stat yay-stat">
@@ -36,6 +61,9 @@
             <div class="image-container">
                 <img id="personImage" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=600&fit=crop" alt="Person to rate" class="person-image">
                 <div class="image-overlay"></div>
+                <div id="imageInfo" class="image-info hidden">
+                    <p id="imageSource"></p>
+                </div>
             </div>
 
             <!-- Rating Buttons -->
