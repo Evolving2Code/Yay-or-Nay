@@ -239,6 +239,9 @@ class YayOrNayApp {
         this.nayImages = [];
         this.currentImageIndex = 0;
         this.currentImage = '';
+        this.searchResults = [];
+        this.currentSearchResultIndex = 0;
+        this.isSearchMode = false;
         
         this.initElements();
         this.attachEventListeners();
@@ -259,6 +262,11 @@ class YayOrNayApp {
         this.closeBtn = document.getElementById('closeBtn');
         this.resultsTitle = document.getElementById('resultsTitle');
         this.resultsList = document.getElementById('resultsList');
+        this.searchInput = document.getElementById('searchInput');
+        this.searchBtn = document.getElementById('searchBtn');
+        this.platformRadios = document.querySelectorAll('input[name="platform"]');
+        this.imageInfo = document.getElementById('imageInfo');
+        this.imageSource = document.getElementById('imageSource');
     }
 
     attachEventListeners() {
@@ -271,12 +279,211 @@ class YayOrNayApp {
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) this.closeModal();
         });
+        this.searchBtn.addEventListener('click', () => this.handleSearch());
+        this.searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.handleSearch();
+        });
+    }
+
+    handleSearch() {
+        const query = this.searchInput.value.trim();
+        const platform = document.querySelector('input[name="platform"]:checked').value;
+        
+        if (!query) {
+            alert('Please enter a username to search');
+            return;
+        }
+
+        this.searchResults = [];
+        this.isSearchMode = true;
+        this.currentSearchResultIndex = 0;
+
+        if (platform === 'instagram') {
+            this.searchInstagram(query);
+        } else if (platform === 'tiktok') {
+            this.searchTikTok(query);
+        }
+    }
+
+    searchInstagram(username) {
+        // Construct Instagram URLs for the user
+        const instagramUrls = [
+            `https://www.instagram.com/${username}/`,
+            `https://www.instagram.com/${username}/?hl=en`,
+        ];
+
+        // Fetch Instagram profile images using various methods
+        const imageUrls = [];
+
+        // Method 1: Direct Instagram profile picture from their CDN
+        imageUrls.push(`https://instagram.com/${username}/media/?__a=1`);
+        
+        // Method 2: Using Instagram's API endpoint for profile picture
+        imageUrls.push(`https://www.instagram.com/${username}/`);
+
+        // Create placeholder messages for Instagram results
+        this.searchResults = [
+            {
+                url: `https://www.instagram.com/${username}/`,
+                source: `Instagram: @${username}`,
+                type: 'instagram'
+            },
+            {
+                url: `https://www.instagram.com/${username}/`,
+                source: `Instagram Profile: @${username}`,
+                type: 'instagram'
+            }
+        ];
+
+        // Try to fetch actual profile images
+        this.fetchInstagramImages(username).then(urls => {
+            if (urls.length > 0) {
+                this.searchResults = urls.map(url => ({
+                    url: url,
+                    source: `Instagram: @${username}`,
+                    type: 'instagram',
+                    displayUrl: url
+                }));
+            }
+            this.displayNextImage();
+        }).catch(err => {
+            console.log('Could not fetch Instagram images, opening profile', err);
+            // Open Instagram profile as fallback
+            window.open(`https://www.instagram.com/${username}/`, '_blank');
+            this.exitSearchMode();
+        });
+    }
+
+    searchTikTok(username) {
+        // Construct TikTok URLs for the user
+        const tiktokUrls = [
+            `https://www.tiktok.com/@${username}`,
+            `https://www.tiktok.com/@${username}/?hl=en`,
+        ];
+
+        // Create placeholder messages for TikTok results
+        this.searchResults = [
+            {
+                url: `https://www.tiktok.com/@${username}`,
+                source: `TikTok: @${username}`,
+                type: 'tiktok'
+            },
+            {
+                url: `https://www.tiktok.com/@${username}`,
+                source: `TikTok Profile: @${username}`,
+                type: 'tiktok'
+            }
+        ];
+
+        // Try to fetch actual profile images
+        this.fetchTikTokImages(username).then(urls => {
+            if (urls.length > 0) {
+                this.searchResults = urls.map(url => ({
+                    url: url,
+                    source: `TikTok: @${username}`,
+                    type: 'tiktok',
+                    displayUrl: url
+                }));
+            }
+            this.displayNextImage();
+        }).catch(err => {
+            console.log('Could not fetch TikTok images, opening profile', err);
+            // Open TikTok profile as fallback
+            window.open(`https://www.tiktok.com/@${username}`, '_blank');
+            this.exitSearchMode();
+        });
+    }
+
+    async fetchInstagramImages(username) {
+        try {
+            const response = await fetch(`https://www.instagram.com/${username}/?__a=1`);
+            const data = await response.json();
+            
+            if (data.graphql && data.graphql.user) {
+                const user = data.graphql.user;
+                const images = [];
+
+                // Get profile picture
+                if (user.profile_pic_url_hd) {
+                    images.push(user.profile_pic_url_hd);
+                } else if (user.profile_pic_url) {
+                    images.push(user.profile_pic_url);
+                }
+
+                // Get recent posts
+                if (user.edge_user_to_photos_of_you && user.edge_user_to_photos_of_you.edges) {
+                    user.edge_user_to_photos_of_you.edges.forEach(edge => {
+                        if (edge.node.display_url) {
+                            images.push(edge.node.display_url);
+                        }
+                    });
+                }
+
+                return images.slice(0, 20); // Return up to 20 images
+            }
+        } catch (error) {
+            console.log('Instagram API not accessible, will open profile instead', error);
+        }
+        return [];
+    }
+
+    async fetchTikTokImages(username) {
+        try {
+            const response = await fetch(`https://www.tiktok.com/@${username}`);
+            const html = await response.text();
+            
+            // Parse profile image URL from HTML
+            const profilePicMatch = html.match(/"avatarLarger":"([^"]+)"/);
+            const images = [];
+
+            if (profilePicMatch && profilePicMatch[1]) {
+                images.push(profilePicMatch[1]);
+            }
+
+            return images;
+        } catch (error) {
+            console.log('TikTok fetch not accessible, will open profile instead', error);
+        }
+        return [];
+    }
+
+    exitSearchMode() {
+        this.isSearchMode = false;
+        this.searchResults = [];
+        this.searchInput.value = '';
+        this.displayNextImage();
     }
 
     displayNextImage() {
-        this.currentImageIndex = Math.floor(Math.random() * images.length);
-        this.currentImage = images[this.currentImageIndex];
-        this.personImage.src = this.currentImage;
+        if (this.isSearchMode && this.searchResults.length > 0) {
+            // Display search results
+            const result = this.searchResults[this.currentSearchResultIndex];
+            
+            if (result.displayUrl) {
+                // Direct image URL
+                this.personImage.src = result.displayUrl;
+                this.personImage.alt = result.source;
+                this.imageInfo.classList.remove('hidden');
+                this.imageSource.textContent = result.source;
+            } else {
+                // Social media profile link
+                this.personImage.style.display = 'none';
+                this.imageInfo.classList.add('hidden');
+                alert(`Opening ${result.source}\n\nPlease select images from their profile.`);
+                window.open(result.url, '_blank');
+                this.exitSearchMode();
+                return;
+            }
+
+            this.currentSearchResultIndex = (this.currentSearchResultIndex + 1) % this.searchResults.length;
+        } else {
+            // Display random images from default collection
+            this.currentImageIndex = Math.floor(Math.random() * images.length);
+            this.currentImage = images[this.currentImageIndex];
+            this.personImage.src = this.currentImage;
+            this.personImage.style.display = 'block';
+            this.imageInfo.classList.add('hidden');
+        }
         
         // Add animation
         this.personImage.style.animation = 'none';
@@ -286,8 +493,16 @@ class YayOrNayApp {
     }
 
     handleYay() {
+        if (this.isSearchMode && this.searchResults.length > 0) {
+            const result = this.searchResults[(this.currentSearchResultIndex - 1 + this.searchResults.length) % this.searchResults.length];
+            if (result.displayUrl) {
+                this.yayImages.push(result.displayUrl);
+            }
+        } else {
+            this.yayImages.push(this.currentImage);
+        }
+        
         this.yayCount++;
-        this.yayImages.push(this.currentImage);
         this.updateStats();
         this.saveToLocalStorage();
         this.animateButton(this.yayBtn);
@@ -295,8 +510,16 @@ class YayOrNayApp {
     }
 
     handleNay() {
+        if (this.isSearchMode && this.searchResults.length > 0) {
+            const result = this.searchResults[(this.currentSearchResultIndex - 1 + this.searchResults.length) % this.searchResults.length];
+            if (result.displayUrl) {
+                this.nayImages.push(result.displayUrl);
+            }
+        } else {
+            this.nayImages.push(this.currentImage);
+        }
+        
         this.nayCount++;
-        this.nayImages.push(this.currentImage);
         this.updateStats();
         this.saveToLocalStorage();
         this.animateButton(this.nayBtn);
