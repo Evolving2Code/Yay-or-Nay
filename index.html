@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yay or Nay - Rate Beautiful People</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="stars"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">✨ Yay or Nay ✨</h1>
+            <p class="subtitle">What do you think?</p>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat yay-stat">
+                <span class="stat-icon">👍</span>
+                <span class="stat-label">Yays</span>
+                <span class="stat-count" id="yayCount">0</span>
+            </div>
+            <div class="stat nay-stat">
+                <span class="stat-icon">👎</span>
+                <span class="stat-label">Nays</span>
+                <span class="stat-count" id="nayCount">0</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Image Display -->
+            <div class="image-container">
+                <img id="personImage" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&h=600&fit=crop" alt="Person to rate" class="person-image">
+                <div class="image-overlay"></div>
+            </div>
+
+            <!-- Rating Buttons -->
+            <div class="button-group">
+                <button class="btn btn-nay" id="nayBtn">
+                    <span class="btn-icon">👎</span>
+                    <span class="btn-text">Nay</span>
+                </button>
+                <button class="btn btn-yay" id="yayBtn">
+                    <span class="btn-icon">👍</span>
+                    <span class="btn-text">Yay</span>
+                </button>
+            </div>
+
+            <!-- Next Button -->
+            <button class="btn btn-next" id="nextBtn">
+                <span>Next Person →</span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section">
+            <div class="results-toggle">
+                <button class="toggle-btn" id="toggleYaysBtn">See All Yays</button>
+                <button class="toggle-btn" id="toggleNaysBtn">See All Nays</button>
+            </div>
+            
+            <div id="resultsModal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-btn" id="closeBtn">&times;</button>
+                    <h2 id="resultsTitle">Yays</h2>
+                    <div id="resultsList" class="results-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made with 💖 | Rate responsibly</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
